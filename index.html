@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌸 NekoSales Analytics ~ สรุปยอดขายสไตล์อะนิเมะ & จัดการสไลด์</title>
+  
+  <!-- Google Fonts: Prompt & Kanit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Falling Sakura Canvas -->
+  <canvas id="sakura-canvas"></canvas>
+
+  <div class="container">
+
+    <!-- Top Anime Navbar -->
+    <header class="glass-card anime-header">
+      <div class="brand-wrapper">
+        <div class="mascot-avatar" title="Neko-chan Mascot 🌸">🐱</div>
+        <div class="brand-info">
+          <h1>NekoSales Analytics 🌸✨</h1>
+          <p>ระบบวิเคราะห์ข้อมูลยอดขายและจัดการสไลด์นำเสนอสไตล์อนิเมะคาวาอี้ ~</p>
+        </div>
+      </div>
+      <div class="header-controls">
+        <button id="btn-toggle-sakura" class="btn btn-secondary" title="เปิด/ปิด กลีบซากุระ">🌸 ซากุระ</button>
+        <button id="btn-toggle-sound" class="btn btn-secondary" title="เปิด/ปิด เสียงเอฟเฟกต์">🔊 เสียงน่ารัก</button>
+        <button id="btn-open-slides-overview" class="btn btn-primary" title="เปิดดูสไลด์ทั้งหมด">📑 สารบัญสไลด์</button>
+      </div>
+    </header>
+
+    <!-- Outlier Wet Waste Alert Banner -->
+    <div class="trash-alert-banner">
+      <div class="trash-alert-content">
+        <div class="trash-badge-icon">🗑️</div>
+        <div>
+          <div class="trash-alert-title">
+            <span>แจ้งเตือนการคัดกรองข้อมูล: ตรวจพบบัญชีอายุเกินเกณฑ์ (หมวดหมู่ขยะเปียก)</span>
+            <span class="tag tag-trash" style="font-size:0.85rem; padding: 4px 10px;">179 รายการ</span>
+          </div>
+          <div class="trash-alert-desc">
+            จากการตรวจสอบทางสถิติ (Mean = 32.2 ปี, SD = 10.0 ปี) พบข้อมูลลูกค้าที่มีอายุมากกว่าเกณฑ์ปกติ (Mean + 2SD &gt; 52.2 ปี) จำนวน <strong>179 รายการ</strong> ซึ่งได้ทำการ <strong>แยกออกไปอยู่ในหมวดหมู่ "ขยะเปียก"</strong> เรียบร้อยแล้ว เพื่อให้การวิเคราะห์สไลด์และกราฟหลักสะท้อนความเป็นจริงมากที่สุด!
+          </div>
+        </div>
+      </div>
+      <button id="btn-jump-to-trash" class="btn btn-secondary" style="border-color:#FEB2B2; color:#C53030;">
+        🔍 ดูรายการขยะเปียกทั้งหมด
+      </button>
+    </div>
+
+    <!-- Executive KPI Summary Cards -->
+    <div class="kpi-grid">
+      <div class="glass-card kpi-card pink">
+        <div class="kpi-header">
+          <span class="kpi-title">ยอดขายสุทธิ (คลีนแล้ว)</span>
+          <div class="kpi-icon">💰</div>
+        </div>
+        <div class="kpi-value" id="kpi-total-rev">฿0</div>
+        <div class="kpi-sub">✨ จากคำสั่งซื้อที่มีคุณภาพ</div>
+      </div>
+
+      <div class="glass-card kpi-card purple">
+        <div class="kpi-header">
+          <span class="kpi-title">ออเดอร์ที่ใช้งานวิเคราะห์</span>
+          <div class="kpi-icon">📦</div>
+        </div>
+        <div class="kpi-value" id="kpi-clean-orders">0</div>
+        <div class="kpi-sub">🌸 คิดเป็น 98.2% ของข้อมูลทั้งหมด</div>
+      </div>
+
+      <div class="glass-card kpi-card red">
+        <div class="kpi-header">
+          <span class="kpi-title">คัดแยกสู่ "ขยะเปียก"</span>
+          <div class="kpi-icon">🗑️</div>
+        </div>
+        <div class="kpi-value" id="kpi-trash-orders" style="color:var(--trash-color)">0</div>
+        <div class="kpi-sub">⚠️ อายุ 53-63 ปี (Outliers)</div>
+      </div>
+
+      <div class="glass-card kpi-card yellow">
+        <div class="kpi-header">
+          <span class="kpi-title">มูลค่าในขยะเปียก</span>
+          <div class="kpi-icon">💸</div>
+        </div>
+        <div class="kpi-value" id="kpi-trash-rev" style="color:var(--warning-color)">฿0</div>
+        <div class="kpi-sub">🚫 ถูกกันออกเพื่อความแม่นยำ</div>
+      </div>
+
+      <div class="glass-card kpi-card blue">
+        <div class="kpi-header">
+          <span class="kpi-title">อายุเฉลี่ยลูกค้าหลัก</span>
+          <div class="kpi-icon">🎂</div>
+        </div>
+        <div class="kpi-value" id="kpi-avg-age">0 ปี</div>
+        <div class="kpi-sub">💖 กลุ่มวัยรุ่นถึงวัยทำงาน</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="view-tabs">
+      <button class="tab-btn active" data-view="all">✨ แสดงทั้งหมด (All Overview)</button>
+      <button class="tab-btn" data-view="slides">📑 ตัวจัดการสไลด์นำเสนอ (Slide Deck)</button>
+      <button class="tab-btn" data-view="regions">🗺️ เจาะลึกรายภาค/จังหวัด (Region &amp; Province Hub)</button>
+      <button class="tab-btn" data-view="trash">🗑️ หมวดหมู่ขยะเปียก (Wet Waste Table)</button>
+    </div>
+
+    <!-- SECTION 1: SLIDE PRESENTATION MANAGER -->
+    <section id="slide-manager-section" class="slide-manager">
+      <div class="glass-card slide-controls-bar">
+        <div class="slide-indicator">
+          <span class="slide-tag">🎀 โหมดจัดการสไลด์นำเสนอ</span>
+          <span class="slide-counter" id="slide-counter-text">สไลด์ที่ 1 / 7</span>
+        </div>
+        <div class="slide-nav-btns">
+          <button id="btn-prev-slide" class="btn btn-secondary">◀ สไลด์ก่อนหน้า</button>
+          <button id="btn-next-slide" class="btn btn-primary">สไลด์ถัดไป ▶</button>
+        </div>
+      </div>
+
+      <div class="slide-card-container">
+
+        <!-- SLIDE 1: Executive Summary & Regional Overview -->
+        <div id="slide-1" class="glass-card slide-card active">
+          <div class="slide-header">
+            <div>
+              <span class="slide-tag">🌸 สไลด์ที่ 1 : ภาพรวมยอดขายระดับผู้บริหาร</span>
+              <h3 class="slide-title">Executive Summary &amp; สัดส่วนยอดขาย 5 ภูมิภาค</h3>
+              <p class="slide-subtitle">วิเคราะห์การกระจายตัวของรายได้และจำนวนคำสั่งซื้อทั่วประเทศไทย (หลังตัดขยะเปียก)</p>
+            </div>
+            <span class="tag tag-success" style="font-size:0.9rem; padding: 6px 14px;">ยอดขายรวม ฿10.82M</span>
+          </div>
+          <div class="slide-body">
+            <div class="chart-grid-2">
+              <div class="chart-box">
+                <h4>📊 ยอดขายสุทธิเปรียบเทียบตามภูมิภาค (บาท)</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide1-region-rev"></canvas>
+                </div>
+              </div>
+              <div class="chart-box">
+                <h4>🍩 สัดส่วนจำนวนคำสั่งซื้อรายภูมิภาค (%)</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide1-region-orders"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Anime Explanation Box -->
+            <div class="anime-explanation-box">
+              <div class="anime-mascot-chibi">👧🏻🎀</div>
+              <div class="explanation-text">
+                <h5>🌸 สรุปวิเคราะห์จากน้องซากุระ (Key Regional Insights):</h5>
+                <p><strong>1. ภาคกลางครองแชมป์ยอดขายอันดับ 1:</strong> กวาดรายได้ไปกว่า <strong>฿4.42M (40.6%)</strong> และมีคำสั่งซื้อสูงถึง 4,062 ออเดอร์ นำโดยกรุงเทพฯ และปทุมธานีที่มีกำลังซื้อสูง</p>
+                <p><strong>2. ภาคเหนือและอีสานเป็นตลาดรองที่เติบโตเด่น:</strong> ภาคเหนือทำยอดขายได้ <strong>฿2.26M (20.8%)</strong> และภาคตะวันออกเฉียงเหนือทำได้ <strong>฿2.12M (19.5%)</strong> รวมกันคิดเป็นกว่า 40% ของทั้งประเทศ</p>
+                <ul class="explanation-bullets">
+                  <li><span class="bullet-star">★</span> <strong>ข้อเสนอแนะ:</strong> ควรจัดโปรโมชัน Flash Sale เฉพาะภาคกลางเพื่อรักษาฐานยอดขายหลัก และขยายแคมเปญส่งฟรีในภาคใต้และภาคตะวันออกเพื่อกระตุ้นยอดคำสั่งซื้อ</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 2: Outlier Management & Wet Waste -->
+        <div id="slide-2" class="glass-card slide-card">
+          <div class="slide-header">
+            <div>
+              <span class="slide-tag" style="background:#FFF5F5; color:#E53E3E; border-color:#FEB2B2;">🗑️ สไลด์ที่ 2 : การคัดกรองข้อมูลผิดปกติ</span>
+              <h3 class="slide-title">หมวดหมู่ "ขยะเปียก" (Outlier Data Cleansing)</h3>
+              <p class="slide-subtitle">การตรวจจับและคัดแยกข้อมูลลูกค้าที่มีอายุเกินเกณฑ์ปกติออกจากฐานข้อมูลหลัก</p>
+            </div>
+            <span class="tag tag-trash" style="font-size:0.9rem; padding: 6px 14px;">คัดแยกออก 179 รายการ</span>
+          </div>
+          <div class="slide-body">
+            <div class="chart-grid-2">
+              <div class="chart-box">
+                <h4>📈 การกระจายตัวของอายุลูกค้า &amp; จุดตัดขยะเปียก (&gt; 52.2 ปี)</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide2-age-cutoff"></canvas>
+                </div>
+              </div>
+              <div class="chart-box">
+                <h4>🎯 สัดส่วนสินค้าที่กลุ่มขยะเปียกเคยสั่งซื้อ</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide2-trash-categories"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Anime Explanation Box -->
+            <div class="anime-explanation-box" style="border-color:#FEB2B2; background:rgba(255, 245, 245, 0.95);">
+              <div class="anime-mascot-chibi">🧹🐱</div>
+              <div class="explanation-text">
+                <h5 style="color:#C53030;">🗑️ สรุปวิเคราะห์หมวดหมู่ "ขยะเปียก" (Outlier Insights):</h5>
+                <p><strong>1. เกณฑ์การคัดแยกทางสถิติ (Statistical Anomaly Detection):</strong> ลูกค้าส่วนใหญ่มีอายุเฉลี่ยอยู่ที่ <strong>32.19 ปี</strong> (SD = 10.02) ค่าความผิดปกติคำนวณจากสูตร <code>Mean + 2SD = 52.23 ปี</code> ผู้ที่มีอายุ 53 - 63 ปีจึงถูกจำแนกเป็น <strong>"ขยะเปียก"</strong></p>
+                <p><strong>2. ผลกระทบต่อยอดขาย:</strong> ขยะเปียก 179 รายการ มีมูลค่ารวม <strong>฿194,466</strong> (คิดเป็น 1.77% ของยอดเดิม) การคัดแยกทำให้เราได้ฐานข้อมูลลูกค้าเป้าหมายที่เป็นวัยรุ่นและวัยทำงานอย่างแท้จริง ไม่ถูกข้อมูลบิดเบือน</p>
+                <ul class="explanation-bullets">
+                  <li><span class="bullet-star">★</span> <strong>การจัดการข้อมูล:</strong> ข้อมูลชุดนี้ไม่ได้ถูกลบทิ้งถาวร แต่ถูกนำมากักกันไว้ในแถบ <em>"หมวดหมู่ขยะเปียก"</em> สามารถตรวจสอบและดาวน์โหลดกลับไปวิเคราะห์กลุ่มผู้สูงวัยได้ตลอดเวลา</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 3: Regional & Top Provinces -->
+        <div id="slide-3" class="glass-card slide-card">
+          <div class="slide-header">
+            <div>
+              <span class="slide-tag">🏯 สไลด์ที่ 3 : เจาะลึกระดับจังหวัด</span>
+              <h3 class="slide-title">Top 10 จังหวัดยอดขายสูงสุด &amp; ค่าเฉลี่ยต่อบิล (AOV)</h3>
+              <p class="slide-subtitle">อันดับเมืองเศรษฐกิจสำคัญที่สร้างรายได้หลักให้กับธุรกิจ</p>
+            </div>
+            <span class="tag tag-region" style="font-size:0.9rem; padding: 6px 14px;">ครอบคลุม 25 จังหวัด</span>
+          </div>
+          <div class="slide-body">
+            <div class="chart-grid-2">
+              <div class="chart-box">
+                <h4>🏆 10 อันดับจังหวัดที่มียอดขายรวมสูงสุด (บาท)</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide3-top-provinces"></canvas>
+                </div>
+              </div>
+              <div class="chart-box">
+                <h4>💳 ยอดการสั่งซื้อเฉลี่ยต่อบิล (AOV) ในแต่ละภาค</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide3-avg-basket"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Anime Explanation Box -->
+            <div class="anime-explanation-box">
+              <div class="anime-mascot-chibi">🍡✨</div>
+              <div class="explanation-text">
+                <h5>🌸 สรุปวิเคราะห์เจาะลึกจังหวัด (City-Level Highlights):</h5>
+                <p><strong>1. กรุงเทพฯ คือศูนย์กลางกำลังซื้อ:</strong> กรุงเทพมหานครสร้างรายได้ถึง <strong>฿2.21M</strong> ทิ้งห่างอันดับสองอย่างปทุมธานี (฿821k) และน่าน (฿559k) อย่างชัดเจน</p>
+                <p><strong>2. ภาคใต้มีมูลค่าต่อบิล (AOV) สูงสุด:</strong> แม้จำนวนออเดอร์ในภาคใต้จะน้อยกว่า แต่ยอดใช้จ่ายเฉลี่ยต่อบิลสูงถึง <strong>฿1,213</strong> ต่อออเดอร์ เนื่องจากลูกค้านิยมสั่งซื้อสินค้าแกดเจ็ตและรองเท้าแฟชั่นที่มีราคาสูง</p>
+                <ul class="explanation-bullets">
+                  <li><span class="bullet-star">★</span> <strong>กลยุทธ์:</strong> มุ่งเน้นโปรโมชันแพ็กเกจ Bundle ในภาคใต้เพื่อดัน Basket Size ให้สูงขึ้นต่อเนื่อง</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 4: Product Categories & Bestsellers -->
+        <div id="slide-4" class="glass-card slide-card">
+          <div class="slide-header">
+            <div>
+              <span class="slide-tag">🛍️ สไลด์ที่ 4 : ประสิทธิภาพหมวดหมู่สินค้า</span>
+              <h3 class="slide-title">Product Category Performance &amp; สินค้ายอดนิยม</h3>
+              <p class="slide-subtitle">เปรียบเทียบยอดขายและปริมาณคำสั่งซื้อใน 7 หมวดหมู่สินค้าหลัก</p>
+            </div>
+            <span class="tag tag-success" style="font-size:0.9rem; padding: 6px 14px;">7 หมวดหมู่หลัก</span>
+          </div>
+          <div class="slide-body">
+            <div class="chart-grid-2">
+              <div class="chart-box">
+                <h4>📦 ยอดขายรวมตามหมวดหมู่สินค้า (บาท)</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide4-cat-revenue"></canvas>
+                </div>
+              </div>
+              <div class="chart-box">
+                <h4>🍰 สัดส่วนจำนวนออเดอร์แต่ละหมวดหมู่ (%)</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide4-cat-orders"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Anime Explanation Box -->
+            <div class="anime-explanation-box">
+              <div class="anime-mascot-chibi">🎀🛍️</div>
+              <div class="explanation-text">
+                <h5>🌸 สรุปหมวดหมู่สินค้าขายดี (Category Performance):</h5>
+                <p><strong>1. "อิเล็กทรอนิกส์" สร้างรายได้สูงสุด:</strong> ทำยอดขายไปถึง <strong>฿4.55M (42%)</strong> จากสินค้าฮิต เช่น สมาร์ทวอทช์ คีย์บอร์ดเกมมิ่ง และลำโพงพกพา</p>
+                <p><strong>2. "แฟชั่น" &amp; "ความงาม" ปริมาณออเดอร์มหาศาล:</strong> แฟชั่นสร้างรายได้ <strong>฿2.04M</strong> (2,031 ออเดอร์) และความงาม <strong>฿1.38M</strong> (1,941 ออเดอร์) เป็นกลุ่มสินค้าที่มีความถี่ในการซื้อซ้ำสูงสุด</p>
+                <ul class="explanation-bullets">
+                  <li><span class="bullet-star">★</span> <strong>โอกาสเติบโต:</strong> หมวด "อาหารและเครื่องดื่ม" และ "บ้านและสวน" มีศักยภาพในการทำ Cross-selling ร่วมกับแกดเจ็ตได้ดี</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 5: Channels & Payments -->
+        <div id="slide-5" class="glass-card slide-card">
+          <div class="slide-header">
+            <div>
+              <span class="slide-tag">📱 สไลด์ที่ 5 : ช่องทางการขายและวิธีชำระเงิน</span>
+              <h3 class="slide-title">Omnichannel Distribution &amp; Payment Breakdown</h3>
+              <p class="slide-subtitle">พฤติกรรมการเลือกใช้แพลตฟอร์มและช่องทางธุรกรรมการเงินของลูกค้า</p>
+            </div>
+            <span class="tag tag-region" style="font-size:0.9rem; padding: 6px 14px;">พร้อมเพย์อันดับ 1</span>
+          </div>
+          <div class="slide-body">
+            <div class="chart-grid-2">
+              <div class="chart-box">
+                <h4>📲 ช่องทางการขายที่ลูกค้าใช้งานมากที่สุด</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide5-channels"></canvas>
+                </div>
+              </div>
+              <div class="chart-box">
+                <h4>💳 สัดส่วนวิธีการชำระเงินของลูกค้า (%)</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide5-payments"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Anime Explanation Box -->
+            <div class="anime-explanation-box">
+              <div class="anime-mascot-chibi">🍙💳</div>
+              <div class="explanation-text">
+                <h5>🌸 สรุปพฤติกรรมดิจิทัลของลูกค้า (Channel &amp; Payment Habits):</h5>
+                <p><strong>1. Mobile-First &amp; Web ครองตลาด:</strong> ลูกค้าสั่งซื้อผ่าน <strong>แอปมือถือ 32% (3,177 รายการ)</strong> และ <strong>เว็บไซต์ 31% (3,032 รายการ)</strong> รวมกันเป็นกว่า 63% ขณะที่หน้าร้านมีสัดส่วน 24%</p>
+                <p><strong>2. สังคมไร้เงินสดสมบูรณ์แบบ:</strong> <strong>พร้อมเพย์ (PromptPay)</strong> เป็นวิธีชำระเงินอันดับหนึ่ง คิดเป็น <strong>44.8%</strong> ตามด้วยบัตรเครดิต <strong>25.5%</strong> และเก็บเงินปลายทาง (COD) 17.6% ส่วนเงินสดเหลือเพียง 1.9%</p>
+                <ul class="explanation-bullets">
+                  <li><span class="bullet-star">★</span> <strong>คำแนะนำ:</strong> พัฒนา UX/UI บนแอปมือถือให้ลื่นไหลและมีระบบสแกน QR PromptPay แบบ 1-Click Payment</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 6: Demographics & Age Groups -->
+        <div id="slide-6" class="glass-card slide-card">
+          <div class="slide-header">
+            <div>
+              <span class="slide-tag">🎂 สไลด์ที่ 6 : ประชากรศาสตร์ลูกค้า</span>
+              <h3 class="slide-title">Customer Age Segments &amp; Gender Breakdown</h3>
+              <p class="slide-subtitle">การกระจายตัวของกลุ่มช่วงอายุและสัดส่วนเพศของฐานลูกค้าคุณภาพ</p>
+            </div>
+            <span class="tag tag-success" style="font-size:0.9rem; padding: 6px 14px;">ฐานลูกค้า 15-52 ปี</span>
+          </div>
+          <div class="slide-body">
+            <div class="chart-grid-2">
+              <div class="chart-box">
+                <h4>📊 ยอดขายแบ่งตามช่วงอายุลูกค้า (บาท)</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide6-ages"></canvas>
+                </div>
+              </div>
+              <div class="chart-box">
+                <h4>🚻 สัดส่วนเพศของลูกค้า (หญิง / ชาย / ไม่ระบุ)</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide6-gender"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Anime Explanation Box -->
+            <div class="anime-explanation-box">
+              <div class="anime-mascot-chibi">👩🏻‍🎓✨</div>
+              <div class="explanation-text">
+                <h5>🌸 สรุปโปรไฟล์ลูกค้าเป้าหมาย (Customer Persona):</h5>
+                <p><strong>1. กลุ่มอายุทรงพลังที่สุดคือ 30-39 ปี:</strong> สร้างยอดขายรวมกันกว่า <strong>฿4.8M (คิดเป็น 45% ของรายได้ทั้งหมด)</strong> เป็นวัยทำงานที่มีกำลังซื้อและพร้อมจ่ายเพื่อความสะดวก</p>
+                <p><strong>2. กลุ่ม Gen Z (15-24 ปี) คืออนาคต:</strong> มีคำสั่งซื้อสูงถึง 2,437 รายการ โดยนิยมหมวดแฟชั่น เครื่องเขียน และแกดเจ็ตเกมมิ่ง</p>
+                <p><strong>3. สัดส่วนเพศสมดุล:</strong> ลูกค้าเพศหญิง <strong>53.7%</strong> และเพศชาย <strong>44.3%</strong> โดยเพศหญิงนิยมซื้อเครื่องสำอางและแฟชั่น ขณะที่เพศชายนิยมอิเล็กทรอนิกส์และกีฬา</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 7: Fulfillment & Review Ratings -->
+        <div id="slide-7" class="glass-card slide-card">
+          <div class="slide-header">
+            <div>
+              <span class="slide-tag">🚚 สไลด์ที่ 7 : การจัดส่งและความพึงพอใจ</span>
+              <h3 class="slide-title">Fulfillment Speed, Order Status &amp; Monthly Trend</h3>
+              <p class="slide-subtitle">ประสิทธิภาพการจัดส่ง อัตราความสำเร็จ และการเติบโตของยอดขายรายเดือน</p>
+            </div>
+            <span class="tag tag-success" style="font-size:0.9rem; padding: 6px 14px;">อัตราสำเร็จ 94.1%</span>
+          </div>
+          <div class="slide-body">
+            <div class="chart-grid-2">
+              <div class="chart-box">
+                <h4>🎯 อัตราสถานะคำสั่งซื้อ (สำเร็จ / ยกเลิก / คืนสินค้า)</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide7-status"></canvas>
+                </div>
+              </div>
+              <div class="chart-box">
+                <h4>📅 แนวโน้มยอดขายรายเดือนตลอด 2 ปี (บาท)</h4>
+                <div class="chart-wrapper">
+                  <canvas id="chart-slide7-timeline"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Anime Explanation Box -->
+            <div class="anime-explanation-box">
+              <div class="anime-mascot-chibi">🌟🎌</div>
+              <div class="explanation-text">
+                <h5>🌸 สรุปและกลยุทธ์ก้าวต่อไป (Actionable Strategic Plan):</h5>
+                <p><strong>1. สุขภาพออเดอร์แข็งแกร่งมาก:</strong> ออเดอร์จัดส่งสำเร็จสูงถึง <strong>94.1%</strong> มีการยกเลิกเพียง 4.8% และคืนสินค้าเพียง 2.9%</p>
+                <p><strong>2. ความพึงพอใจลูกค้าเฉลี่ย 4.2 ดาว:</strong> จัดส่งสินค้าได้รวดเร็วเฉลี่ย <strong>2.3 วัน</strong> ทั่วประเทศ</p>
+                <ul class="explanation-bullets">
+                  <li><span class="bullet-star">★</span> <strong>Double-Day Mega Campaigns:</strong> ยอดขายพุ่งแตะจุดสูงสุดในช่วงเทศกาล 9.9, 11.11 และ 12.12 ของทุกปี ควรเตรียมสต็อกสินค้าอิเล็กทรอนิกส์ล่วงหน้า 30 วัน</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 2: INTERACTIVE REGIONAL & PROVINCE EXPLORER -->
+    <section id="region-explorer-section" class="region-explorer-section">
+      <div class="section-title-wrap">
+        <h2>🗺️ หน้าสำรวจแยกหมวดหมู่ตามภาค &amp; จังหวัด</h2>
+        <p>เลือกภูมิภาคผ่าน Button Group ด้านล่าง และเลือกดูรายจังหวัดได้ทันทีด้วย List Selector</p>
+      </div>
+
+      <!-- Region Button Group -->
+      <div class="glass-card province-control-card">
+        <div class="region-btn-group-wrapper">
+          <div class="region-btn-group-label">
+            <span>🌸 เลือกภูมิภาค (Region Button Group):</span>
+          </div>
+          <div class="region-btn-group">
+            <button class="region-btn active" data-region="ทั้งหมด">✨ ทั้งหมด (All Regions)</button>
+            <button class="region-btn" data-region="ภาคกลาง">🏯 ภาคกลาง</button>
+            <button class="region-btn" data-region="ภาคเหนือ">🏔️ ภาคเหนือ</button>
+            <button class="region-btn" data-region="ภาคตะวันออกเฉียงเหนือ">🌾 ภาคตะวันออกเฉียงเหนือ</button>
+            <button class="region-btn" data-region="ภาคตะวันออก">🌊 ภาคตะวันออก</button>
+            <button class="region-btn" data-region="ภาคใต้">🌴 ภาคใต้</button>
+          </div>
+        </div>
+
+        <!-- Province Filter: Dropdown List & Button Chips -->
+        <div class="province-filter-row">
+          <div class="filter-item">
+            <label for="province-select">📍 เลือกจังหวัดจากรายชื่อ (List Selector):</label>
+            <select id="province-select" class="anime-select">
+              <option value="ทั้งหมด">🌸 ทุกจังหวัดในภูมิภาคนี้ (All Provinces)</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>⚡ คลิกเลือกจังหวัดในภาคแบบด่วน (Button Group):</label>
+            <div id="province-chips-container" class="province-chips-list">
+              <!-- Dynamically populated chips -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Province Details & Charts -->
+        <div class="province-detail-card">
+          <div class="province-detail-header">
+            <div>
+              <h3 id="area-detail-title">🇹🇭 ประเทศไทย (ภาพรวมทุกภาค)</h3>
+              <small id="area-detail-badge" class="tag tag-region" style="font-size:0.85rem; padding:4px 10px;">25 จังหวัด 5 ภูมิภาค</small>
+            </div>
+            <span class="tag tag-success" style="font-size:0.85rem;">ข้อมูลที่คัดกรองขยะเปียกแล้ว</span>
+          </div>
+
+          <!-- Mini KPI row -->
+          <div class="mini-kpi-bar">
+            <div class="mini-kpi">
+              <div class="mini-kpi-label">ยอดขายรวม</div>
+              <div class="mini-kpi-val" id="area-kpi-rev">฿0</div>
+            </div>
+            <div class="mini-kpi">
+              <div class="mini-kpi-label">จำนวนออเดอร์</div>
+              <div class="mini-kpi-val" id="area-kpi-orders">0</div>
+            </div>
+            <div class="mini-kpi">
+              <div class="mini-kpi-label">เฉลี่ยต่อบิล (AOV)</div>
+              <div class="mini-kpi-val" id="area-kpi-aov">฿0</div>
+            </div>
+            <div class="mini-kpi">
+              <div class="mini-kpi-label">คะแนนรีวิว</div>
+              <div class="mini-kpi-val" id="area-kpi-review">0.0 ★</div>
+            </div>
+            <div class="mini-kpi">
+              <div class="mini-kpi-label">วันจัดส่งเฉลี่ย</div>
+              <div class="mini-kpi-val" id="area-kpi-deliv">0 วัน</div>
+            </div>
+          </div>
+
+          <!-- Province Charts -->
+          <div class="chart-grid-2">
+            <div class="chart-box">
+              <h4>📦 ยอดขายแยกตามหมวดหมู่สินค้าในพื้นที่นี้</h4>
+              <div class="chart-wrapper">
+                <canvas id="chart-area-category"></canvas>
+              </div>
+            </div>
+            <div class="chart-box">
+              <h4>📱 สัดส่วนช่องทางการขาย (แอป / เว็บ / หน้าร้าน / โซเชียล)</h4>
+              <div class="chart-wrapper">
+                <canvas id="chart-area-channel"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-grid-2" style="margin-top:20px;">
+            <div class="chart-box">
+              <h4>💳 วิธีการชำระเงินที่นิยมในพื้นที่นี้</h4>
+              <div class="chart-wrapper">
+                <canvas id="chart-area-payment"></canvas>
+              </div>
+            </div>
+            <div class="chart-box">
+              <h4>🏆 5 สินค้าขายดีที่สุดในพื้นที่นี้</h4>
+              <div class="table-responsive" style="max-height: 290px;">
+                <table class="anime-table">
+                  <thead>
+                    <tr>
+                      <th>ชื่อสินค้า</th>
+                      <th>จำนวนชิ้น</th>
+                      <th>ยอดขายรวม</th>
+                    </tr>
+                  </thead>
+                  <tbody id="area-top-products-tbody">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: WET WASTE (ขยะเปียก) QUARANTINE TABLE -->
+    <section id="trash-section" class="trash-section">
+      <div class="section-title-wrap">
+        <h2 style="background: linear-gradient(135deg, #E53E3E, #DD6B20); -webkit-background-clip: text;">
+          🗑️ ตารางตรวจสอบ "หมวดหมู่ขยะเปียก" (Outlier Quarantine)
+        </h2>
+        <p>รายชื่อคำสั่งซื้อที่ถูกคัดแยกออกเนื่องจากอายุเกินเกณฑ์ปกติ (&gt; 52.2 ปี)</p>
+      </div>
+
+      <div class="glass-card trash-card">
+        <div class="trash-table-controls">
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <input type="text" id="trash-search-input" class="search-box" placeholder="🔍 ค้นหารหัส, ชื่อสินค้า, จังหวัด...">
+            <span id="trash-count-badge" class="tag tag-trash" style="font-size:0.9rem; padding:6px 12px;">179 รายการ</span>
+          </div>
+          <button id="btn-export-trash" class="btn btn-secondary" style="border-color:#FEB2B2; color:#C53030;">
+            📥 ส่งออก CSV ขยะเปียก
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="anime-table">
+            <thead>
+              <tr>
+                <th>รหัสออเดอร์</th>
+                <th>รหัสลูกค้า</th>
+                <th>อายุ</th>
+                <th>เพศ</th>
+                <th>จังหวัด/ภาค</th>
+                <th>สินค้าที่สั่ง</th>
+                <th>ยอดรวม</th>
+                <th>สถานะ</th>
+                <th>เหตุผลการคัดแยก</th>
+              </tr>
+            </thead>
+            <tbody id="trash-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>🌸 ออกแบบและจัดทำด้วยความรักสไตล์อนิเมะสำหรับ <strong>GitHub Pages</strong> | NekoSales Dashboard 2026 ✨</p>
+      <p style="margin-top:6px; font-size:0.8rem; color:#A0AEC0;">ข้อมูลผ่านการคัดกรองทางสถิติ (Mean+2SD Outlier Removal) เรียบร้อยแล้ว</p>
+    </footer>
+
+  </div>
+
+  <!-- Modal: Slide Overview Grid -->
+  <div id="slide-overview-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="color:var(--sakura-deep); display:flex; align-items:center; gap:8px;">
+          📑 สารบัญสไลด์นำเสนอทั้งหมด (Slide Navigator)
+        </h3>
+        <button id="btn-close-modal" class="btn btn-secondary" style="padding:6px 12px;">✕ ปิด</button>
+      </div>
+      <div class="slide-thumb-grid">
+        <div class="slide-thumb-card" data-slide="1">
+          <div class="slide-thumb-number">สไลด์ที่ 1</div>
+          <div class="slide-thumb-title">🌟 ภาพรวมผู้บริหาร (Executive Summary)</div>
+          <div class="slide-thumb-desc">ยอดขายเปรียบเทียบ 5 ภาค และสัดส่วนออเดอร์</div>
+        </div>
+        <div class="slide-thumb-card" data-slide="2">
+          <div class="slide-thumb-number" style="color:var(--trash-color);">สไลด์ที่ 2 (พิเศษ)</div>
+          <div class="slide-thumb-title">🗑️ หมวดหมู่ขยะเปียก (Outliers)</div>
+          <div class="slide-thumb-desc">การคัดกรองลูกค้าอายุเกินเกณฑ์ 179 รายการ</div>
+        </div>
+        <div class="slide-thumb-card" data-slide="3">
+          <div class="slide-thumb-number">สไลด์ที่ 3</div>
+          <div class="slide-thumb-title">🗺️ เจาะลึกรายจังหวัด &amp; AOV</div>
+          <div class="slide-thumb-desc">10 อันดับเมืองสร้างรายได้ และยอดต่อบิล</div>
+        </div>
+        <div class="slide-thumb-card" data-slide="4">
+          <div class="slide-thumb-number">สไลด์ที่ 4</div>
+          <div class="slide-thumb-title">🛍️ ประสิทธิภาพหมวดสินค้า</div>
+          <div class="slide-thumb-desc">7 หมวดหมู่สินค้า และสินค้า Best Seller</div>
+        </div>
+        <div class="slide-thumb-card" data-slide="5">
+          <div class="slide-thumb-number">สไลด์ที่ 5</div>
+          <div class="slide-thumb-title">📱 ช่องทางจำหน่าย &amp; ชำระเงิน</div>
+          <div class="slide-thumb-desc">พฤติกรรมใช้แอป/เว็บ และพร้อมเพย์อันดับ 1</div>
+        </div>
+        <div class="slide-thumb-card" data-slide="6">
+          <div class="slide-thumb-number">สไลด์ที่ 6</div>
+          <div class="slide-thumb-title">🎂 ประชากรศาสตร์ &amp; อายุลูกค้า</div>
+          <div class="slide-thumb-desc">โครงสร้างอายุ 15-52 ปี และสัดส่วนเพศ</div>
+        </div>
+        <div class="slide-thumb-card" data-slide="7">
+          <div class="slide-thumb-number">สไลด์ที่ 7</div>
+          <div class="slide-thumb-title">🚚 การจัดส่ง &amp; สรุปกลยุทธ์</div>
+          <div class="slide-thumb-desc">ระยะเวลาจัดส่ง, รีวิว 4.2 ดาว และเทรนด์ 2 ปี</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Script First -->
+  <script src="data.js"></script>
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+
+</body>
+</html>
